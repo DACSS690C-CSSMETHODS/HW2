@@ -1,0 +1,228 @@
+---
+title: "R Notebook"
+output:
+  html_document:
+    df_print: paged
+---
+Use the Peruvian data, and prepare a code in R to answer:
+- Is the whole network connected? If disconnected, keep the giant component to answer all the remaining questions. If connected, use the whole graph for the remaining questions.
+- Who are the nodes that represent the vertices in the diameter?
+- Make a plot that highlights the nodes with the highest betweenness.
+- Make a DataFrame with three the centrality measures, and plot those three values in a scatterplot.
+
+```{r}
+rm(list = ls())
+GitLink='https://github.com/DACSS690C-CSSMETHODS/HW2/raw/refs/heads/main/graph_FigueData.graphml'
+```
+
+```{r}
+library(igraph)
+peru=read_graph(GitLink,format='graphml')
+```
+
+```{r}
+summary(peru)
+```
+This is a summary of my directed (D) weighted (W) graph, with 37 nodes and 266 edges.
+
+Question 1: Is the whole network connected? If disconnected, keep the giant component to answer all the remaining questions. If connected, use the whole graph for the remaining questions.
+```{r}
+is_connected(peru)
+```
+It looks like the network is disconnected. 
+
+Question 2: Who are the nodes that represent the vertices in the diameter?
+
+Option A method:
+```{r}
+isolates = which(degree(peru,mode='in') + degree(peru,mode='out')==0 )
+peru_noIsolates = delete_vertices(peru, isolates)
+## result
+summary(peru_noIsolates)
+```
+
+Now I can find nodes that represent the vertices in the diameter
+```{r}
+diameter(peru_noIsolates)
+```
+The diameter of a graph is the length of the longest shortest path between any two vertices. The output shows that the diameter is 4.
+
+```{r}
+farthest_vertices(peru_noIsolates)
+```
+Finding the nodes whose geodesic represent the diameter: 27 and 28
+
+
+```{r}
+get_diameter(peru_noIsolates)
+```
+The nodes that represent the vertices in the diameter of the graph peru_noIsolates are:
+Vertices: 27, 3, 1, 13, 28
+These vertices form the longest shortest path in the graph, which has a length of 4.
+
+Question 3: Make a plot that highlights the nodes with the highest betweenness.
+```{r}
+sort(betweenness(peru_noIsolates,normalized=T))
+```
+
+```{r}
+#getting betweenness centrality for all nodes and sort it
+betweenness_scores = betweenness(peru_noIsolates, directed = TRUE, weights = E(peru_noIsolates)$weight, normalized = TRUE)
+sorted_betweenness_scores = sort(betweenness_scores, decreasing = TRUE)
+
+#defining a threshold for top betweenness nodes
+top_n = 5
+top_betweenness_threshold = sorted_betweenness_scores[top_n]
+
+#indentifying the nodes with the highest betweenness centrality
+top_betweenness_nodes = V(peru_noIsolates)[betweenness_scores >= top_betweenness_threshold]
+
+#colors
+vcol = rep("grey80", vcount(peru_noIsolates))
+vcol[top_betweenness_nodes] = "red"
+
+#plotting
+plot(peru_noIsolates, vertex.color = vcol, layout = layout.fruchterman.reingold, 
+     vertex.label.cex = 0.8, vertex.size = 5, edge.arrow.size = 0.5)
+```
+
+Question 4: Make a DataFrame with three the centrality measures, and plot those three values in a scatterplot.
+```{r}
+#three the centrality measures
+rounding=2
+degr=round(degree(peru_noIsolates,normalized=T),rounding)
+close=round(closeness(peru_noIsolates,normalized=T),rounding)
+betw=round(betweenness(peru_noIsolates,normalized=T),rounding)
+#making the dataframe
+DFCentrality=as.data.frame(cbind(degr,close,betw),stringsAsFactors = F)
+names(DFCentrality)=c('Degree','Closeness','Betweenness')
+```
+
+```{r}
+DFCentrality$person=row.names(DFCentrality)
+row.names(DFCentrality)=NULL
+```
+
+```{r}
+#plotting scatterplot
+library(ggplot2)
+library(ggrepel)
+ggplot(DFCentrality, aes(x=Betweenness, y=Closeness)) + 
+    theme_classic() + geom_point() +
+    geom_label_repel(aes(label=person,fill=Degree),color='white') +
+    scale_fill_gradient2(low = "red", mid='grey50',high ="darkgreen",
+                           midpoint = 0.3)
+```
+
+Use the Seattle data, and prepare a code in R to answer:
+- Is the whole network connected? If disconnected, keep the giant component to answer all the remaining questions. If connected, use the whole graph for the remaining questions.
+- How many nodes should be deleted to split this network?
+- Make a DataFrame with three the Link Analysis measures Hubs, Authorities, and PageRank, and plot those three values in a scatterplot.
+```{r}
+rm(list = ls())
+GitLink='https://github.com/DACSS690C-CSSMETHODS/HW2/raw/refs/heads/main/graph_edgelist.graphml'
+```
+
+```{r}
+library(igraph)
+seattle=read_graph(GitLink,format='graphml')
+```
+
+```{r}
+summary(seattle)
+```
+This is a summary of my directed (D) weighted (W) graph, with 46 nodes and 588 edges.
+
+Question 1: Is the whole network connected? If disconnected, keep the giant component to answer all the remaining questions. If connected, use the whole graph for the remaining questions.
+```{r}
+is_connected(seattle)
+```
+It looks like the network is connected.
+
+Question 2: How many nodes should be deleted to split this network?
+```{r}
+vertex_connectivity(seattle)
+```
+0 nodes should be deleted (what).
+
+Question 3: Make a DataFrame with three the Link Analysis measures Hubs, Authorities, and PageRank, and plot those three values in a scatterplot.
+```{r}
+#my three link analysis measures
+Lk_hub=hub_score(seattle)$vector
+Lk_auth=authority_score(seattle)$vector
+Lk_page=page_rank(seattle)$vector
+#making the dataframe
+seattle_LINK=as.data.frame(cbind(Lk_hub,Lk_auth,Lk_page))
+seattle_LINK
+```
+
+```{r}
+#scatterplot time
+seattle_LINK$person=row.names(seattle_LINK)
+
+ggplot(seattle_LINK, aes(x=Lk_hub, y=Lk_auth)) + 
+    theme_classic() + geom_point() +
+    geom_label_repel(aes(label=person,fill=Lk_page),color='white') +
+    scale_fill_gradient2(low = "red", mid='grey50',high ="darkgreen",
+                           midpoint = 0.05)
+```
+
+Use the Fifa Data, projecting only the countries, and report:
+- Is the whole network connected? If disconnected, keep the giant component to answer all the remaining questions. If connected, use the whole graph for the remaining questions.
+- What is the density of this network?
+- Make a DataFrame with three the centrality measures, and plot those three values in a scatterplot.
+```{r}
+rm(list = ls())
+GitLink='https://github.com/DACSS690C-CSSMETHODS/HW2/raw/refs/heads/main/country_projection.graphml'
+```
+
+```{r}
+library(igraph)
+fifa=read_graph(GitLink,format='graphml')
+```
+
+```{r}
+summary(fifa)
+```
+This is a summary of my undirected graph, with 32 nodes and 305 edges.
+
+Question 1: Is the whole network connected? If disconnected, keep the giant component to answer all the remaining questions. If connected, use the whole graph for the remaining questions.
+```{r}
+is_connected(fifa)
+```
+It looks like the network is connected.
+
+Question 2: What is the density of this network?
+```{r}
+edge_density(fifa)
+```
+
+Question 3: Make a DataFrame with three the centrality measures, and plot those three values in a scatterplot.
+```{r}
+#my three centrality measures
+rounding=2
+degr=round(degree(fifa,normalized=T),rounding)
+close=round(closeness(fifa,normalized=T),rounding)
+betw=round(betweenness(fifa,normalized=T),rounding)
+#making the dataframe
+DFCentrality=as.data.frame(cbind(degr,close,betw),stringsAsFactors = F)
+names(DFCentrality)=c('Degree','Closeness','Betweenness')
+```
+
+```{r}
+DFCentrality$person=row.names(DFCentrality)
+row.names(DFCentrality)=NULL
+```
+
+```{r}
+#plotting
+library(ggplot2)
+library(ggrepel)
+ggplot(DFCentrality, aes(x=Betweenness, y=Closeness)) + 
+    theme_classic() + geom_point() +
+    geom_label_repel(aes(label=person,fill=Degree),color='white') +
+    scale_fill_gradient2(low = "red", mid='grey50',high ="darkgreen",
+                           midpoint = 0.3)
+```
+
+
