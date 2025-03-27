@@ -25,6 +25,12 @@ summary(peru)
 ```
 This is a summary of my directed (D) weighted (W) graph, with 37 nodes and 266 edges.
 
+Adding names to my nodes:
+```{r}
+V(peru)$name=V(peru)$id
+```
+
+
 Question 1: Is the whole network connected? If disconnected, keep the giant component to answer all the remaining questions. If connected, use the whole graph for the remaining questions.
 ```{r}
 is_connected(peru)
@@ -50,14 +56,14 @@ The diameter of a graph is the length of the longest shortest path between any t
 ```{r}
 farthest_vertices(peru_noIsolates)
 ```
-Finding the nodes whose geodesic represent the diameter: 27 and 28
+Finding the nodes whose geodesic represent the diameter: Michell and Wong Lu
 
 
 ```{r}
 get_diameter(peru_noIsolates)
 ```
 The nodes that represent the vertices in the diameter of the graph peru_noIsolates are:
-Vertices: 27, 3, 1, 13, 28
+Vertices: Michell      Miro Quesada Romero       Bentin       Wong Lu   
 These vertices form the longest shortest path in the graph, which has a length of 4.
 
 Question 3: Make a plot that highlights the nodes with the highest betweenness.
@@ -133,6 +139,11 @@ summary(seattle)
 ```
 This is a summary of my directed (D) weighted (W) graph, with 46 nodes and 588 edges.
 
+Adding names to my nodes:
+```{r}
+V(seattle)$name=V(seattle)$id
+```
+
 Question 1: Is the whole network connected? If disconnected, keep the giant component to answer all the remaining questions. If connected, use the whole graph for the remaining questions.
 ```{r}
 is_connected(seattle)
@@ -143,7 +154,7 @@ Question 2: How many nodes should be deleted to split this network?
 ```{r}
 vertex_connectivity(seattle)
 ```
-0 nodes should be deleted (what).
+0 nodes should be deleted.
 
 Question 3: Make a DataFrame with three the Link Analysis measures Hubs, Authorities, and PageRank, and plot those three values in a scatterplot.
 ```{r}
@@ -185,6 +196,11 @@ fifa=read_graph(GitLink,format='graphml')
 summary(fifa)
 ```
 This is a summary of my undirected graph, with 32 nodes and 305 edges.
+
+Adding names to my nodes:
+```{r}
+V(fifa)$name=V(fifa)$id
+```
 
 Question 1: Is the whole network connected? If disconnected, keep the giant component to answer all the remaining questions. If connected, use the whole graph for the remaining questions.
 ```{r}
